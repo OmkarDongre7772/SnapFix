@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import {
   getAllReports,
-  addReportToDB,
+  // addReportToDB,
   updateReportInDB,
   deleteReportFromDB,
 } from "../DB/db"; // these functions are now Supabase based
@@ -25,18 +25,18 @@ export const FeedProvider = ({ children }) => {
   }, []);
 
   // ✅ Add a new report (DB + state)
-  const addReport = useCallback(async (newReport) => {
-    try {
-      const saved = await addReportToDB(newReport); // inserts into Supabase
-      setFeedReports((prev) => {
-        const exists = prev.some((r) => r.id === saved.id);
-        if (exists) return prev;
-        return [saved, ...prev];
-      });
-    } catch (err) {
-      console.error("Error adding report:", err.message);
-    }
-  }, []);
+  // const addReport = useCallback(async (newReport) => {
+  //   try {
+  //     const saved = await addReportToDB(newReport); // inserts into Supabase
+  //     setFeedReports((prev) => {
+  //       const exists = prev.some((r) => r.id === saved.id);
+  //       if (exists) return prev;
+  //       return [saved, ...prev];
+  //     });
+  //   } catch (err) {
+  //     console.error("Error adding report:", err.message);
+  //   }
+  // }, []);
 
   // ✅ Remove a report (DB + state)
   const removeReport = useCallback(async (id) => {
@@ -64,7 +64,7 @@ export const FeedProvider = ({ children }) => {
     <FeedContext.Provider
       value={{
         feedReports,
-        addReport,
+        // addReport,
         removeReport,
         updateReport,
       }}

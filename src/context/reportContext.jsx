@@ -23,8 +23,10 @@ export const ReportProvider = ({ children }) => {
     title: "",
     description: "",
     location: null,
-    previewImage: null,
-    mapPreview: null,
+    upvotes:0,
+    bids:0,
+    status:"pending",
+    user_id:null
   });
   const [loading, setLoading] = useState(false);
 
@@ -128,7 +130,7 @@ export const ReportProvider = ({ children }) => {
       const reportData = {
         ...currentReport,
         image: imageUrl || currentReport.image || null,
-        user_id: isLoggedIn && user ? user.user_id : 0,
+        user_id: isLoggedIn && user ? user.id : 0,
         upvotes: 0,
         bids: 0,
         status: "pending",
@@ -143,11 +145,13 @@ export const ReportProvider = ({ children }) => {
 
       setCurrentReport({
         image: null,
-        title: "",
-        description: "",
-        location: null,
-        previewImage: null,
-        mapPreview: null,
+    title: "",
+    description: "",
+    location: null,
+    upvotes:0,
+    bids:0,
+    status:"pending",
+    user_id:null
       });
     } catch (err) {
       console.error("Error submitting report:", err);
