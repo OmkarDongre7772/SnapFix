@@ -6,7 +6,7 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/** 🔧 Centralized Error Handler */
+/* 🧩 Centralized Error Handler */
 const handleError = (error, context = "") => {
   if (error) {
     console.error(`❌ Supabase Error in ${context}:`, error.message);
@@ -14,11 +14,11 @@ const handleError = (error, context = "") => {
   }
 };
 
-/** 🖼 Upload image to Supabase Storage (returns public URL) */
+/* 🖼 Upload image to Supabase Storage (returns public URL) */
 export const uploadImageToSupabase = async (file) => {
   if (!file) return null;
-
   const fileName = `${Date.now()}-${file.name}`;
+
   const { error: uploadError } = await supabase.storage
     .from("report-images")
     .upload(fileName, file, { upsert: false });
@@ -32,7 +32,7 @@ export const uploadImageToSupabase = async (file) => {
   return publicUrlData?.publicUrl || null;
 };
 
-/** 👤 Add user */
+/* 👤 Add new user */
 export const addUserToDB = async (userData) => {
   const newUser = {
     type: userData.type || "citizen",
@@ -40,7 +40,6 @@ export const addUserToDB = async (userData) => {
     password: userData.password || "",
   };
 
-  // Check if user already exists
   const { data: existingUser, error: existingError } = await supabase
     .from("users")
     .select("*")
@@ -50,7 +49,6 @@ export const addUserToDB = async (userData) => {
   handleError(existingError, "addUserToDB check existing");
   if (existingUser) throw new Error("Email already registered");
 
-  // Insert user
   const { data, error } = await supabase
     .from("users")
     .insert([newUser])
@@ -61,7 +59,7 @@ export const addUserToDB = async (userData) => {
   return data;
 };
 
-/** 🔐 Authenticate user */
+/* 🔐 Authenticate user */
 export const authenticateUser = async (email, password) => {
   const { data: user, error } = await supabase
     .from("users")
@@ -76,7 +74,7 @@ export const authenticateUser = async (email, password) => {
   return user;
 };
 
-/** 📄 Get all reports (sorted by creation date, newest first) */
+/* 📄 Get all reports (newest first) */
 export const getAllReports = async () => {
   const { data, error } = await supabase
     .from("reports")
@@ -87,7 +85,7 @@ export const getAllReports = async () => {
   return data || [];
 };
 
-/** 📑 Get reports by a specific user */
+/* 📑 Get reports by specific user */
 export const getReportsByUser = async (user_id) => {
   const { data, error } = await supabase
     .from("reports")
@@ -99,7 +97,7 @@ export const getReportsByUser = async (user_id) => {
   return data || [];
 };
 
-/** ➕ Add a new report */
+/* ➕ Add a new report */
 export const addReportToDB = async (reportData) => {
   const newReport = {
     title: reportData.title || "Untitled Report",
@@ -122,7 +120,7 @@ export const addReportToDB = async (reportData) => {
   return data;
 };
 
-/** 🔁 Update an existing report */
+/* 🔁 Update report */
 export const updateReportInDB = async (id, updatedFields) => {
   const { data, error } = await supabase
     .from("reports")
@@ -135,7 +133,7 @@ export const updateReportInDB = async (id, updatedFields) => {
   return data;
 };
 
-/** 🗑 Delete a report */
+/* 🗑 Delete report */
 export const deleteReportFromDB = async (id) => {
   const { error } = await supabase.from("reports").delete().eq("id", id);
   handleError(error, "deleteReportFromDB");
