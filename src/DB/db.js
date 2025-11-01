@@ -1,16 +1,20 @@
-import Dexie from "dexie";
+// src/DB/db.js
+import { createClient } from "@supabase/supabase-js";
 
-// ✅ Create Dexie database
-export const db = new Dexie("CivicAppDB");
+// ✅ Initialize Supabase client
+const supabaseUrl = "https://YOUR_PROJECT_URL.supabase.co"; // Replace with your Supabase URL
+const supabaseAnonKey = "YOUR_ANON_PUBLIC_KEY"; // Replace with your public anon key
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ✅ Define tables
-db.version(1).stores({
-  reports:
-    "++id, title, description, location, image, upvotes, bids, status, user_id",
-  users: "++user_id, type, email, password",
-});
+// 🧩 Utility: centralized error handler
+const handleError = (error, context = "") => {
+  if (error && error.message) {
+    console.error(`❌ Supabase Error in ${context}:`, error.message);
+    throw new Error(error.message);
+  }
+};
 
-// ✅ Add a new user (prevent duplicates)
+// ✅ Add new user (prevent duplicates)
 export const addUserToDB = async (userData) => {
   const newUser = {
     type: userData.type || "citizen",
@@ -18,17 +22,36 @@ export const addUserToDB = async (userData) => {
     password: userData.password || "",
   };
 
-  const existingUser = await db.users.where("email").equals(newUser.email).first();
+  // Check for existing user
+  const { data: existingUser, error: existingError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", newUser.email)
+    .maybeSingle();
+
+  if (existingError) handleError(existingError, "addUserToDB");
   if (existingUser) throw new Error("Email already registered");
 
-  const user_id = await db.users.add(newUser);
-  return { user_id, ...newUser };
+  // Add new user
+  const { data, error } = await supabase
+    .from("users")
+    .insert([newUser])
+    .select()
+    .single();
+
+  if (error) handleError(error, "addUserToDB");
+  return data;
 };
 
 // ✅ Authenticate existing user
 export const authenticateUser = async (email, password) => {
-  const user = await db.users.where("email").equals(email.toLowerCase()).first();
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
 
+  if (error) handleError(error, "authenticateUser");
   if (!user) throw new Error("User not found");
   if (user.password !== password) throw new Error("Invalid password");
 
@@ -37,13 +60,25 @@ export const authenticateUser = async (email, password) => {
 
 // ✅ Fetch all reports
 export const getAllReports = async () => {
-  const reports = await db.reports.toArray();
-  return reports.sort((a, b) => b.id - a.id);
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .order("id", { ascending: false }); // use id to stay aligned with old Dexie logic
+
+  if (error) handleError(error, "getAllReports");
+  return data || [];
 };
 
 // ✅ Fetch reports by user_id
 export const getReportsByUser = async (user_id) => {
-  return await db.reports.where("user_id").equals(user_id).toArray();
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", user_id)
+    .order("id", { ascending: false });
+
+  if (error) handleError(error, "getReportsByUser");
+  return data || [];
 };
 
 // ✅ Add new report
@@ -56,19 +91,34 @@ export const addReportToDB = async (reportData) => {
     upvotes: reportData.upvotes ?? 0,
     bids: reportData.bids ?? 0,
     status: reportData.status || "pending",
-    user_id: reportData.user_id ?? 0,
-    date: new Date().toLocaleString(),
+    user_id: reportData.user_id ?? null,
   };
 
-  const id = await db.reports.add(newReport);
-  return { id, ...newReport };
+  const { data, error } = await supabase
+    .from("reports")
+    .insert([newReport])
+    .select()
+    .single();
+
+  if (error) handleError(error, "addReportToDB");
+  return data;
 };
 
-// ✅ Update & delete reports
+// ✅ Update a report
 export const updateReportInDB = async (id, updatedFields) => {
-  await db.reports.update(id, updatedFields);
+  const { data, error } = await supabase
+    .from("reports")
+    .update(updatedFields)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) handleError(error, "updateReportInDB");
+  return data;
 };
 
+// ✅ Delete a report
 export const deleteReportFromDB = async (id) => {
-  await db.reports.delete(id);
+  const { error } = await supabase.from("reports").delete().eq("id", id);
+  if (error) handleError(error, "deleteReportFromDB");
 };
