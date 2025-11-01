@@ -11,6 +11,7 @@ import {
   addReportToDB,
   getReportsByUser,
   getAllReports,
+  uploadImageToSupabase,
 } from "../DB/db";
 
 export const ReportContext = createContext();
@@ -30,7 +31,7 @@ export const ReportProvider = ({ children }) => {
   const { addReport: addToFeed } = useContext(FeedContext);
   const { user, isLoggedIn } = useContext(UserContext);
 
-  // ✅ Load all reports (for global view)
+  // Load all reports
   useEffect(() => {
     const loadReports = async () => {
       try {
@@ -43,14 +44,14 @@ export const ReportProvider = ({ children }) => {
     loadReports();
   }, []);
 
-  // ✅ Keep feed context updated dynamically
+  // Sync with feed
   useEffect(() => {
     if (addToFeed && reports.length > 0) {
       reports.forEach((r) => addToFeed(r));
     }
   }, [reports, addToFeed]);
 
-  // 📍 Detect location
+  // Detect location
   const detectLocation = useCallback(async () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -76,7 +77,7 @@ export const ReportProvider = ({ children }) => {
     });
   }, []);
 
-  // 📍 Manual pin selection
+  // Manual pin select
   const handleManualLocationSelect = useCallback((coords) => {
     const { latitude, longitude } = coords;
     const mapURL = `https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;
@@ -88,7 +89,7 @@ export const ReportProvider = ({ children }) => {
     }));
   }, []);
 
-  // 🖼️ Image upload
+  // Image upload (preview)
   const handleImageUpload = useCallback((file) => {
     if (file) {
       const previewURL = URL.createObjectURL(file);
@@ -100,13 +101,13 @@ export const ReportProvider = ({ children }) => {
     }
   }, []);
 
-  // ✍️ Input change
+  // Input change
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setCurrentReport((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  // 🚀 Submit report (with DB persistence + live feed)
+  // Submit report
   const submitReport = useCallback(async () => {
     setLoading(true);
     try {
@@ -119,8 +120,14 @@ export const ReportProvider = ({ children }) => {
         return;
       }
 
+      let imageUrl = null;
+      if (currentReport.image instanceof File) {
+        imageUrl = await uploadImageToSupabase(currentReport.image);
+      }
+
       const reportData = {
         ...currentReport,
+        image: imageUrl || currentReport.image || null,
         user_id: isLoggedIn && user ? user.user_id : 0,
         upvotes: 0,
         bids: 0,
@@ -129,7 +136,6 @@ export const ReportProvider = ({ children }) => {
 
       const savedReport = await addReportToDB(reportData);
 
-      // ✅ Update in-memory reports + feed instantly
       setReports((prev) => [savedReport, ...prev]);
       if (addToFeed) addToFeed(savedReport);
 
@@ -151,7 +157,7 @@ export const ReportProvider = ({ children }) => {
     }
   }, [currentReport, user, isLoggedIn, addToFeed]);
 
-  // 🔄 Load reports for logged-in user
+  // Load user reports
   const loadUserReports = useCallback(async () => {
     if (user && user.user_id) {
       const userReports = await getReportsByUser(user.user_id);
@@ -159,7 +165,7 @@ export const ReportProvider = ({ children }) => {
     }
   }, [user]);
 
-  // 🔄 Reset report form manually
+  // Reset form
   const resetReportForm = useCallback(() => {
     setCurrentReport({
       image: null,
