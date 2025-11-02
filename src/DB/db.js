@@ -109,6 +109,14 @@ export const addReportToDB = async (reportData) => {
     status: reportData.status || "pending",
     user_id: reportData.user_id ?? null,
   };
+  if (!reportData.user_id) {
+  throw new Error("Missing user_id: please ensure user is logged in before submitting a report.");
+}
+
+  console.log("The Report is-> "+newReport);
+  console.log(reportData.user_id);
+  console.log(reportData.id);
+  console.log(reportData);
 
   const { data, error } = await supabase
     .from("reports")
@@ -122,16 +130,29 @@ export const addReportToDB = async (reportData) => {
 
 /* 🔁 Update report */
 export const updateReportInDB = async (id, updatedFields) => {
+  // Only include updatable fields
+  const allowedFields = (({ title, description, location, image, upvotes, bids, status, user_id }) => ({
+    title,
+    description,
+    location,
+    image,
+    upvotes,
+    bids,
+    status,
+    user_id,
+  }))(updatedFields);
+
   const { data, error } = await supabase
     .from("reports")
-    .update(updatedFields)
+    .update(allowedFields)
     .eq("id", id)
-    .select()
-    .single();
+    .select("*")
+    .maybeSingle(); // ✅ avoids 406 error
 
   handleError(error, "updateReportInDB");
   return data;
 };
+
 
 /* 🗑 Delete report */
 export const deleteReportFromDB = async (id) => {

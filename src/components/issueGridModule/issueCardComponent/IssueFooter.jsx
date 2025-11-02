@@ -1,18 +1,23 @@
 import React, { useState } from "react";
 import { Heart, ExternalLink } from "lucide-react";
+import { updateReportInDB } from "../../../DB/db";
 
-const IssueFooter = ({ location }) => {
+const IssueFooter = ({ report }) => {
   const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(Math.floor(Math.random() * 100));
+  const [likes, setLikes] = useState(report.bids);
 
-  const googleMapsLink = location
-    ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
+  const googleMapsLink = report.location
+    ? `https://www.google.com/maps?q=${report.location.latitude},${report.location.longitude}`
     : null;
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes((prev) => (liked ? prev - 1 : prev + 1));
-  };
+  const handleLike = async () => {
+  const newLikes = liked ? report.bids - 1 : report.bids + 1;
+  setLiked(!liked);
+  setLikes(newLikes);
+
+  await updateReportInDB(report.id, { bids: newLikes }); // ✅ send only the field that changes
+};
+
 
   return (
     <div className="flex justify-between items-center pt-2 text-sm sm:text-base">

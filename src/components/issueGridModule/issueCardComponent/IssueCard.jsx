@@ -54,7 +54,7 @@ const IssueCard = ({ report }) => {
       </div>
 
       <div className="px-4 pb-4">
-        <IssueFooter location={location} mapPreview={mapPreview} />
+        <IssueFooter report={report} mapPreview={mapPreview} />
       </div>
 
       {expanded && (

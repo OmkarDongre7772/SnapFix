@@ -17,6 +17,9 @@ import {
 export const ReportContext = createContext();
 
 export const ReportProvider = ({ children }) => {
+  // Add this new state
+const [userReports, setUserReports] = useState([]);
+
   const [reports, setReports] = useState([]);
   const [currentReport, setCurrentReport] = useState({
     image: null,
@@ -130,11 +133,12 @@ export const ReportProvider = ({ children }) => {
       const reportData = {
         ...currentReport,
         image: imageUrl || currentReport.image || null,
-        user_id: isLoggedIn && user ? user.id : 0,
+        user_id: (isLoggedIn && user && user.id) ? user.id : null,
         upvotes: 0,
         bids: 0,
         status: "pending",
       };
+      console.log(reportData);
 
       const savedReport = await addReportToDB(reportData);
 
@@ -162,12 +166,24 @@ export const ReportProvider = ({ children }) => {
   }, [currentReport, user, isLoggedIn, addToFeed]);
 
   // Load user reports
-  const loadUserReports = useCallback(async () => {
-    if (user && user.user_id) {
-      const userReports = await getReportsByUser(user.user_id);
-      setReports(userReports);
+const loadUserReports = useCallback(async () => {
+  if (user && user.id) {
+    try {
+      const reports = await getReportsByUser(user.id);
+      setUserReports(reports || []);
+    } catch (err) {
+      console.error("Error fetching user reports:", err);
     }
-  }, [user]);
+  }
+}, [user]);
+
+
+useEffect(() => {
+  if (isLoggedIn && user) {
+    loadUserReports();
+  }
+}, [isLoggedIn, user, loadUserReports]);
+
 
   // Reset form
   const resetReportForm = useCallback(() => {
@@ -185,6 +201,7 @@ export const ReportProvider = ({ children }) => {
     <ReportContext.Provider
       value={{
         reports,
+        userReports, 
         currentReport,
         loading,
         handleInputChange,

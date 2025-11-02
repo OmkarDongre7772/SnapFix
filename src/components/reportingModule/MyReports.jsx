@@ -3,7 +3,7 @@ import { ReportContext } from "../../context/reportContext";
 import IssueGrid from "../../components/issueGridModule/IssueGrid";
 
 const MyReports = () => {
-  const { reports, loading } = useContext(ReportContext);
+  const { loading, userReports } = useContext(ReportContext);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-linear-to-br from-gray-900 to-black text-white p-6">
@@ -17,12 +17,12 @@ const MyReports = () => {
           <div className="text-center text-gray-400 mt-10">
             <p>Loading your reports...</p>
           </div>
-        ) : reports.length === 0 ? (
+        ) : userReports.length === 0 ? (
           <div className="text-center text-gray-400 mt-10">
             <p>You haven’t submitted any reports yet.</p>
           </div>
         ) : (
-          <IssueGrid reports={reports} />
+          <IssueGrid reports={userReports} />
         )}
       </div>
     </div>

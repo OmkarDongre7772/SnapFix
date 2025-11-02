@@ -20,14 +20,19 @@ export const UserProvider = ({ children }) => {
 
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      setUserType(parsedUser.type);
+      const normalizedUser = {
+        ...parsedUser,
+        id: parsedUser.user_id || parsedUser.id,
+      };
+
+      setUser(normalizedUser);
+      setUserType(normalizedUser.type);
       setIsLoggedIn(true);
 
       if (storedReports) {
         setUserReports(JSON.parse(storedReports));
       } else {
-        loadUserReports(parsedUser.user_id);
+        loadUserReports(normalizedUser.id);
       }
     }
   }, []);
@@ -46,7 +51,7 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem("userReports", JSON.stringify(userReports));
   }, [userReports]);
 
-  // ✅ Fetch reports from Dexie
+  // ✅ Fetch reports for a specific user
   const loadUserReports = async (user_id) => {
     try {
       const reports = await getReportsByUser(user_id);
@@ -57,7 +62,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // ✅ Register user (Dexie)
+  // ✅ Register user
   const register = async ({ name, email, password, role }) => {
     if (!name || !email || !password) throw new Error("All fields are required");
 
@@ -67,16 +72,21 @@ export const UserProvider = ({ children }) => {
       password,
     });
 
-    setUser(newUser);
-    setUserType(newUser.type);
-    setIsLoggedIn(true);
-    localStorage.setItem("user", JSON.stringify(newUser));
+    const normalizedUser = {
+      ...newUser,
+      id: newUser.user_id || newUser.id,
+    };
 
-    console.log("✅ Registered user:", newUser);
-    return newUser;
+    setUser(normalizedUser);
+    setUserType(normalizedUser.type);
+    setIsLoggedIn(true);
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
+
+    console.log("✅ Registered user:", normalizedUser);
+    return normalizedUser;
   };
 
-  // ✅ Login user (Dexie)
+  // ✅ Login user
   const login = async ({ email, password, role }) => {
     if (!email || !password) throw new Error("Email and password required");
 
@@ -86,15 +96,20 @@ export const UserProvider = ({ children }) => {
       throw new Error(`Account exists as ${existingUser.type}, not ${role}.`);
     }
 
-    setUser(existingUser);
-    setUserType(existingUser.type);
+    const normalizedUser = {
+      ...existingUser,
+      id: existingUser.user_id || existingUser.id,
+    };
+
+    setUser(normalizedUser);
+    setUserType(normalizedUser.type);
     setIsLoggedIn(true);
-    localStorage.setItem("user", JSON.stringify(existingUser));
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
 
-    await loadUserReports(existingUser.user_id);
+    await loadUserReports(normalizedUser.id);
 
-    console.log("✅ Logged in user:", existingUser);
-    return existingUser;
+    console.log("✅ Logged in user:", normalizedUser);
+    return normalizedUser;
   };
 
   // ✅ Logout user
