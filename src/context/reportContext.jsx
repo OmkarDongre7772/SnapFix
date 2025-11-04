@@ -29,7 +29,7 @@ const [userReports, setUserReports] = useState([]);
     upvotes:0,
     bids:0,
     status:"pending",
-    user_id:null
+    citizen_id:null
   });
   const [loading, setLoading] = useState(false);
 
@@ -133,7 +133,7 @@ const [userReports, setUserReports] = useState([]);
       const reportData = {
         ...currentReport,
         image: imageUrl || currentReport.image || null,
-        user_id: (isLoggedIn && user && user.id) ? user.id : null,
+        citizen_id: (isLoggedIn && user && user.id) ? user.id : null,
         upvotes: 0,
         bids: 0,
         status: "pending",
@@ -155,7 +155,7 @@ const [userReports, setUserReports] = useState([]);
     upvotes:0,
     bids:0,
     status:"pending",
-    user_id:null
+    citizen_id:null
       });
     } catch (err) {
       console.error("Error submitting report:", err);

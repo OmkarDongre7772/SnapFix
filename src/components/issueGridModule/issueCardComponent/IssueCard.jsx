@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import IssueHeader from "./IssueHeader";
 import IssueImage from "./IssueImage";
 import IssueFooter from "./IssueFooter";
 import IssueMapPreview from "./IssueMapPreview";
+import {UserContext} from "../../../context/userContext"
 
 const IssueCard = ({ report }) => {
+  const user = useContext(UserContext);
   if (!report) return null;
 
   const {
@@ -54,7 +56,7 @@ const IssueCard = ({ report }) => {
       </div>
 
       <div className="px-4 pb-4">
-        <IssueFooter report={report} mapPreview={mapPreview} />
+        <IssueFooter report={report} user={user.user} mapPreview={mapPreview} />
       </div>
 
       {expanded && (

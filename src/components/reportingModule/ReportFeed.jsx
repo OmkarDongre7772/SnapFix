@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FeedContext } from "../../context/feedContext";
 import IssueGrid from "../issueGridModule/IssueGrid";
+import GigNavbar from "../global_components/Navbars/GigNavbar";
 
 const ReportFeed = () => {
   const { feedReports } = useContext(FeedContext);
@@ -12,6 +13,7 @@ const ReportFeed = () => {
   }, [feedReports]);
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20 px-4 md:px-8 transition-all">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-semibold text-gray-800 dark:text-white mb-6">
@@ -35,6 +37,7 @@ const ReportFeed = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

@@ -17,7 +17,9 @@ import MyReports from "./components/reportingModule/MyReports"; // 🆕
 import ReportForm from "./components/reportingModule/ReportForm"; // 🆕
 import AuthenticationWindow from "./components/loginModule/AuthenticationWindow";
 import ReportFeed from "./components/reportingModule/ReportFeed";
-// import GigWorkerPage from "./pages/GigWorkerPage";
+import GigWorkerPage from "./pages/GigWorkerPage";
+import MyBids from "./components/biddingModule/MyBids";
+import GigNavbar from "./components/global_components/Navbars/GigNavbar";
 // import GovernmentPage from "./pages/GovernmentPage";
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
             {/* Global Navbar only on non-citizen routes */}
             <Routes>
               <Route path="/citizen/*" element={<CitizenNavbar />} />
+              <Route path="/gigworker/*" element={<GigNavbar />} />
+              {/* <Route path="/citigovernmentzen/*" element={<CitizenNavbar />} /> */}
               <Route path="*" element={<Navbar />} />
             </Routes>
 
@@ -53,7 +57,11 @@ function App() {
                 <Route path="/citizen/reports-feed" element={<ReportFeed />} />
 
                 {/* Future routes */}
-                {/* <Route path="/gigworker" element={<GigWorkerPage />} /> */}
+                <Route path="/gigworker" element={<GigWorkerPage />} />
+                <Route path="/gigworker/reports-feed" element={<ReportFeed />} />
+                <Route path="/gigworker/my-bids" element={<MyBids />} />
+
+
                 {/* <Route path="/government" element={<GovernmentPage />} /> */}
               </Routes>
             </main>

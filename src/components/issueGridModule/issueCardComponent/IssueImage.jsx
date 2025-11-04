@@ -8,7 +8,9 @@ const IssueImage = ({ title, image, location, status }) => {
     typeof image === "string" ? image : image ? URL.createObjectURL(image) : null;
 
   return (
+    
     <div className="relative w-full bg-black">
+{/* Image */}
       {imageURL ? (
         <img
           src={imageURL}
@@ -32,7 +34,7 @@ const IssueImage = ({ title, image, location, status }) => {
           No Image
         </div>
       )}
-
+{/* Status */}
       <IssueStatusBadge status={status} />
 
       {location && (

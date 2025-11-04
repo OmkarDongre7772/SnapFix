@@ -67,8 +67,9 @@ export const UserProvider = ({ children }) => {
     if (!name || !email || !password) throw new Error("All fields are required");
 
     const newUser = await addUserToDB({
-      type: role,
+      role: role,
       email,
+      name,
       password,
     });
 
@@ -92,8 +93,8 @@ export const UserProvider = ({ children }) => {
 
     const existingUser = await authenticateUser(email, password);
 
-    if (role && existingUser.type !== role) {
-      throw new Error(`Account exists as ${existingUser.type}, not ${role}.`);
+    if (role && existingUser.role !== role) {
+      throw new Error(`Account exists as ${existingUser.role}, not ${role}.`);
     }
 
     const normalizedUser = {

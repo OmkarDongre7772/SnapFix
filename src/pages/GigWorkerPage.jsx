@@ -1,20 +1,18 @@
 import React from "react";
-import CitizenNavbar from "../components/global_components/Navbars/CitizenNavbar";
 import ReportFeed from "../components/reportingModule/ReportFeed";
+import GigNavbar from "../components/global_components/Navbars/GigNavbar";
 
-const CitizenPage = () => {
+const GigWorkerPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-linear-to-br from-gray-900 to-black text-white">
-      {/* Navbar */}
-      <CitizenNavbar />
 
+      <GigNavbar/>
       {/* Main Content */}
       <main className="grow flex justify-center items-center p-6">
-        <ReportFeed/>
+        <ReportFeed />
       </main>
-
     </div>
   );
 };
 
-export default CitizenPage;
+export default GigWorkerPage;

@@ -6,7 +6,7 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/* 🧩 Centralized Error Handler */
+/* 🧱 Centralized Error Handler */
 const handleError = (error, context = "") => {
   if (error) {
     console.error(`❌ Supabase Error in ${context}:`, error.message);
@@ -17,8 +17,8 @@ const handleError = (error, context = "") => {
 /* 🖼 Upload image to Supabase Storage (returns public URL) */
 export const uploadImageToSupabase = async (file) => {
   if (!file) return null;
-  const fileName = `${Date.now()}-${file.name}`;
 
+  const fileName = `${Date.now()}-${file.name}`;
   const { error: uploadError } = await supabase.storage
     .from("report-images")
     .upload(fileName, file, { upsert: false });
@@ -32,34 +32,41 @@ export const uploadImageToSupabase = async (file) => {
   return publicUrlData?.publicUrl || null;
 };
 
-/* 👤 Add new user */
+/* 👤 Add new user (manual signup mode) */
 export const addUserToDB = async (userData) => {
   const newUser = {
-    type: userData.type || "citizen",
+    role: userData.role || "citizen",
     email: userData.email.toLowerCase(),
     password: userData.password || "",
+    name: userData.name || "",
+    location: userData.location || null,
+    created_at: new Date().toISOString(),
   };
 
+  // Check if user already exists
   const { data: existingUser, error: existingError } = await supabase
     .from("users")
     .select("*")
     .eq("email", newUser.email)
     .maybeSingle();
 
-  handleError(existingError, "addUserToDB check existing");
+  handleError(existingError, "addUserToDB - check existing");
   if (existingUser) throw new Error("Email already registered");
 
+  // Insert new user
   const { data, error } = await supabase
     .from("users")
     .insert([newUser])
     .select()
     .single();
 
-  handleError(error, "addUserToDB insert");
-  return data;
+  handleError(error, "addUserToDB - insert");
+
+  // Add a mirror citizen_id field for convenience
+  return { ...data, citizen_id: data.id };
 };
 
-/* 🔐 Authenticate user */
+/* 🔐 Authenticate user (manual password check) */
 export const authenticateUser = async (email, password) => {
   const { data: user, error } = await supabase
     .from("users")
@@ -68,29 +75,51 @@ export const authenticateUser = async (email, password) => {
     .maybeSingle();
 
   handleError(error, "authenticateUser");
+
   if (!user) throw new Error("User not found");
   if (user.password !== password) throw new Error("Invalid password");
 
-  return user;
+  // Return consistent identity fields
+  return { ...user, citizen_id: user.id };
 };
 
-/* 📄 Get all reports (newest first) */
+/* 📄 Get all reports (for feed) */
 export const getAllReports = async () => {
   const { data, error } = await supabase
     .from("reports")
-    .select("*")
+    .select(
+      `
+      id,
+      title,
+      description,
+      location,
+      image,
+      upvotes,
+      status,
+      category,
+      created_at,
+      citizen_id,
+      citizen:citizen_id (
+        name,
+        email,
+        role
+      )
+    `
+    )
     .order("created_at", { ascending: false });
 
   handleError(error, "getAllReports");
   return data || [];
 };
 
-/* 📑 Get reports by specific user */
-export const getReportsByUser = async (user_id) => {
+/* 📑 Get reports by specific citizen */
+export const getReportsByUser = async (citizen_id) => {
+  if (!citizen_id) throw new Error("Missing citizen_id in getReportsByUser");
+
   const { data, error } = await supabase
     .from("reports")
     .select("*")
-    .eq("user_id", user_id)
+    .eq("citizen_id", citizen_id)
     .order("created_at", { ascending: false });
 
   handleError(error, "getReportsByUser");
@@ -99,24 +128,26 @@ export const getReportsByUser = async (user_id) => {
 
 /* ➕ Add a new report */
 export const addReportToDB = async (reportData) => {
+  // Fix: auto-detect correct citizen_id from any valid field
+  const citizenId =
+    reportData.citizen_id || reportData.user_id || reportData.id;
+
+  if (!citizenId)
+    throw new Error(
+      "Missing citizen_id: user must be logged in to submit a report."
+    );
+
   const newReport = {
     title: reportData.title || "Untitled Report",
     description: reportData.description || "No description provided.",
-    location: reportData.location || "",
+    location: reportData.location || null,
     image: reportData.image || null,
     upvotes: reportData.upvotes ?? 0,
-    bids: reportData.bids ?? 0,
-    status: reportData.status || "pending",
-    user_id: reportData.user_id ?? null,
+    status: reportData.status || "open",
+    category: reportData.category || null,
+    citizen_id: citizenId,
+    created_at: new Date().toISOString(),
   };
-  if (!reportData.user_id) {
-  throw new Error("Missing user_id: please ensure user is logged in before submitting a report.");
-}
-
-  console.log("The Report is-> "+newReport);
-  console.log(reportData.user_id);
-  console.log(reportData.id);
-  console.log(reportData);
 
   const { data, error } = await supabase
     .from("reports")
@@ -130,16 +161,24 @@ export const addReportToDB = async (reportData) => {
 
 /* 🔁 Update report */
 export const updateReportInDB = async (id, updatedFields) => {
-  // Only include updatable fields
-  const allowedFields = (({ title, description, location, image, upvotes, bids, status, user_id }) => ({
+  if (!id) throw new Error("Missing report ID in updateReportInDB");
+
+  const allowedFields = (({
     title,
     description,
     location,
     image,
     upvotes,
-    bids,
     status,
-    user_id,
+    category,
+  }) => ({
+    title,
+    description,
+    location,
+    image,
+    upvotes,
+    status,
+    category,
   }))(updatedFields);
 
   const { data, error } = await supabase
@@ -147,15 +186,16 @@ export const updateReportInDB = async (id, updatedFields) => {
     .update(allowedFields)
     .eq("id", id)
     .select("*")
-    .maybeSingle(); // ✅ avoids 406 error
+    .maybeSingle();
 
   handleError(error, "updateReportInDB");
   return data;
 };
 
-
 /* 🗑 Delete report */
 export const deleteReportFromDB = async (id) => {
+  if (!id) throw new Error("Missing report ID in deleteReportFromDB");
+
   const { error } = await supabase.from("reports").delete().eq("id", id);
   handleError(error, "deleteReportFromDB");
 };

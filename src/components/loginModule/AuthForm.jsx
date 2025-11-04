@@ -4,6 +4,7 @@ const AuthForm = ({ authMode, formData, handleChange, handleAuth, loading }) => 
   <form
     onSubmit={(e) => {
       e.preventDefault();
+      console.log(e)
       handleAuth();
     }}
   >

@@ -36,7 +36,7 @@ const AuthenticationWindow = ({ showLoginModal, setShowLoginModal }) => {
           password: formData.password,
           role: formData.role,
         });
-        alert(`✅ Logged in successfully as ${formData.role}!`);
+        // alert(`✅ Logged in successfully as ${formData.role}!`);
       } else {
         await register({
           name: formData.name,
@@ -44,6 +44,7 @@ const AuthenticationWindow = ({ showLoginModal, setShowLoginModal }) => {
           password: formData.password,
           role: formData.role,
         });
+        console.log(formData);
         alert(`✅ Registered successfully as ${formData.role}!`);
       }
 
